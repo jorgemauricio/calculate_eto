@@ -20,7 +20,23 @@ import math
 matplotlib.style.use('seaborn')
 
 def main():
-    pass
+    """
+    numero,altitud,latitud,tmax,tmed,tmin,hermax,hrmin,hrmean,vvmean,anio,mes,dia
+    """
+    # leer csv
+    df = pd.read_csv("data/example_data.csv")
+
+    # calculo altitud
+    df['altitud'] = df.apply(lambda x: latitud_en_radianes(x['latitud']),axis=1)
+
+    # calculo presión atmosferica
+    df['presion_atmosferica'] = df.apply(lambda x: presion_atmosferica(x['altitud']),axis=1)
+
+    # calculo calor latente
+    df['calor_latente'] = df.apply(lambda x: presion_atmosferica(x['tmed']),axis=1)
+
+    # calculo constante_sicometrica
+    df['constante_sicometrica'] = df.apply(lambda x: presion_atmosferica(x['presion_atmosferica'],x['calor_latente']),axis=1)
 
 
 def latitud_en_radianes(latitud):
