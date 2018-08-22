@@ -22,8 +22,11 @@ from math import exp
 import math
 
 def main():
+    # nombre del archivo
+    nombre_archivo = "example_data"
+
     # leer csv
-    df = pd.read_csv("data/example_data.csv")
+    df = pd.read_csv("data/{}.csv".format(nombre_archivo))
 
     # calculo latitud en radianes
     df['latitud_en_radianes'] = df.apply(lambda x: latitud_en_radianes(x['latitud']),axis=1)
@@ -56,7 +59,10 @@ def main():
     df['constante_sicrometrica_modificada'] = df.apply(lambda x: constante_sicrometrica_modificada(x['constante_sicrometrica'],x['vvmean']),axis=1)
 
     # calculo presion vapor real
-    df['presion_vapor_real'] = df.apply(lambda x: presion_vapor_real(x['hrmax'],x['hrmin'],x['presion_vapor_tmax'],x['presion_vapor_tmin']),axis=1)
+    df['presion_vapor_real'] = df.apply(lambda x: presion_vapor_real(x['hrmax'],
+                                                                     x['hrmin'],
+                                                                     x['presion_vapor_tmax'],
+                                                                     x['presion_vapor_tmin']),axis=1)
 
     # calculo termino aerodinamico
     df['termino_aerodinamico'] = df.apply(lambda x: termino_aerodinamico(x['tmed'],
@@ -114,7 +120,7 @@ def main():
     df['evapotranspiracion'] = df.apply(lambda x: evapotranspiracion(x['termino_aerodinamico'],x['termino_radiacion']),axis=1)
 
     # guardar csv
-    df.to_csv('data_resultado.csv')
+    df.to_csv('data/{}_pp.csv'.format(nombre_archivo))
 
     # print
     print(df.head())
