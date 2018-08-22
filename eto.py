@@ -46,6 +46,9 @@ def main():
     # calculo presión vapor tmed
     df['presion_vapor_tmed'] = df.apply(lambda x: presion_vapor_tmed(x['tmed']),axis=1)
 
+    # calculo presión vapor tmed
+    df['presion_media_vapor'] = df.apply(lambda x: presion_media_vapor(x['presion_vapor_tmax'],x['presion_vapor_tmin']),axis=1)
+
     # calculo pendiente curva presion vapor
     df['pendiente_curva_presion_vapor'] = df.apply(lambda x: pendiente_curva_presion_vapor(x['tmed'],x['presion_vapor_tmed']),axis=1)
 
@@ -59,7 +62,7 @@ def main():
     df['termino_aerodinamico'] = df.apply(lambda x: termino_aerodinamico(x['tmed'],
                                                                          x['vvmean'],
                                                                          x['constante_sicrometrica'],
-                                                                         x['presion_vapor_tmed'],
+                                                                         x['presion_media_vapor'],
                                                                          x['pendiente_curva_presion_vapor'],
                                                                          x['constante_sicrometrica_modificada'],
                                                                          x['presion_vapor_real']),axis=1)
@@ -109,6 +112,9 @@ def main():
 
     # calculo eapotranspiración
     df['evapotranspiracion'] = df.apply(lambda x: evapotranspiracion(x['termino_aerodinamico'],x['termino_radiacion']),axis=1)
+
+    # guardar csv
+    df.to_csv('data_resultado.csv')
 
     # print
     print(df.head())
@@ -201,13 +207,13 @@ def presion_vapor_real(hr_max, hr_min, presion_tmax, presion_tmin):
 def termino_aerodinamico(tmed, vv_promedio, c_sicrometrica, p_media_vapor, pendiente_curva, c_sicrometrica_modificada, p_vapor_real):
     """
     calcula el término aerodinámico de la ecuación de PM en mm/día
-    param: tmed                     : temperatura media
-    param: vv_promedio              :  velocidad del viento promedio
-    param: c_sicrometrica            :  constante sicométrica
-    param: p_media_vapor            :  presión media del vapor en saturación
-    param: pendiente_curva          : pendiente de la curva de la presión de vapor en saturación
+    param: tmed                      : temperatura media
+    param: vv_promedio               : velocidad del viento promedio
+    param: c_sicrometrica            : constante sicométrica
+    param: p_media_vapor             : presión media del vapor en saturación
+    param: pendiente_curva           : pendiente de la curva de la presión de vapor en saturación
     param: c_sicrometrica_modificada : constante sicométrica modificada
-    param: p_vapor_real             : presion de vapor real
+    param: p_vapor_real              : presion de vapor real
     """
     return (c_sicrometrica*900*vv_promedio*(p_media_vapor-p_vapor_real))/((pendiente_curva+c_sicrometrica_modificada)*(tmed+273.16))
 
@@ -250,7 +256,7 @@ def radiacion_extraterrestre(latitud_radianes, dist_tierra_sol, d_solar, a_decli
     param: dist_tierra_sol     : distancia relativa inversa entre la tierra y el sol
     param: a_declinacion_solar : angulo de declinación solar
     """
-    return (118.08/math.pi)*dist_tierra_sol*(a_declinacion_solar*math.sin(latitud_radianes)*math.sin(d_solar)+math.cos(d_solar)*math.cos(d_solar)*math.sin(a_declinacion_solar))
+    return (118.08/math.pi)*dist_tierra_sol*(a_declinacion_solar*math.sin(latitud_radianes)*math.sin(d_solar)+math.cos(latitud_radianes)*math.cos(d_solar)*math.sin(a_declinacion_solar))
 
 def radiacion_solar(radiacion):
     """
@@ -283,7 +289,7 @@ def radiacion_solar_onda_larga(tmax, tmin, p_vapor_real, r_solar, r_solar_cielo_
     param: r_solar                 : radiación solar o de onda corta
     param: r_solar_cielo_despejado : radiación solar con cielo despejado
     """
-    return 4.903*(10**-9)*((tmin+273.16)**4)*(0.34-0.14*math.sqrt(p_vapor_real))*(1.35*(r_solar/r_solar_cielo_despejado)-0.35)/2
+    return 4.903*(10**-9)*((tmax+273.16)**4+(tmin+273.16)**4)*(0.34-0.14*math.sqrt(p_vapor_real))*(1.35*(r_solar/r_solar_cielo_despejado)-0.35)/2
 
 def radiacion_neta(r_onda_corta,r_onda_larga):
     """
