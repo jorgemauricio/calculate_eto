@@ -15,29 +15,103 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
-from math impor exp
+from math import exp
 import math
-matplotlib.style.use('seaborn')
 
 def main():
     """
-    numero,altitud,latitud,tmax,tmed,tmin,hermax,hrmin,hrmean,vvmean,anio,mes,dia
+    numero,altitud,latitud,tmax,tmed,tmin,hrmax,hrmin,hrmean,vvmean,radg,anio,mes,dia
     """
     # leer csv
     df = pd.read_csv("data/example_data.csv")
 
-    # calculo altitud
-    df['altitud'] = df.apply(lambda x: latitud_en_radianes(x['latitud']),axis=1)
+    # calculo latitud en radianes
+    df['latitud_en_radianes'] = df.apply(lambda x: latitud_en_radianes(x['latitud']),axis=1)
 
     # calculo presión atmosferica
     df['presion_atmosferica'] = df.apply(lambda x: presion_atmosferica(x['altitud']),axis=1)
 
     # calculo calor latente
-    df['calor_latente'] = df.apply(lambda x: presion_atmosferica(x['tmed']),axis=1)
+    df['calor_latente'] = df.apply(lambda x: calor_latente(x['tmed']),axis=1)
 
-    # calculo constante_sicometrica
-    df['constante_sicometrica'] = df.apply(lambda x: presion_atmosferica(x['presion_atmosferica'],x['calor_latente']),axis=1)
+    # calculo constante_sicrometrica
+    df['constante_sicrometrica'] = df.apply(lambda x: constante_sicrometrica(x['presion_atmosferica'],x['calor_latente']),axis=1)
 
+    # calculo presión vapor tmin
+    df['presion_vapor_tmin'] = df.apply(lambda x: presion_vapor_tmin(x['tmin']),axis=1)
+
+    # calculo presión vapor tmax
+    df['presion_vapor_tmax'] = df.apply(lambda x: presion_vapor_tmax(x['tmax']),axis=1)
+
+    # calculo presión vapor tmed
+    df['presion_vapor_tmed'] = df.apply(lambda x: presion_vapor_tmed(x['tmed']),axis=1)
+
+    # calculo pendiente curva presion vapor
+    df['pendiente_curva_presion_vapor'] = df.apply(lambda x: pendiente_curva_presion_vapor(x['tmed'],x['presion_vapor_tmed']),axis=1)
+
+    # calculo constante sicrometrica modificada
+    df['constante_sicrometrica_modificada'] = df.apply(lambda x: constante_sicrometrica_modificada(x['constante_sicrometrica'],x['vvmean']),axis=1)
+
+    # calculo presion vapor real
+    df['presion_vapor_real'] = df.apply(lambda x: presion_vapor_real(x['hrmax'],x['hrmin'],x['presion_vapor_tmax'],x['presion_vapor_tmin']),axis=1)
+
+    # calculo termino aerodinamico
+    df['termino_aerodinamico'] = df.apply(lambda x: termino_aerodinamico(x['tmed'],
+                                                                         x['vvmean'],
+                                                                         x['constante_sicrometrica'],
+                                                                         x['presion_vapor_tmed'],
+                                                                         x['pendiente_curva_presion_vapor'],
+                                                                         x['constante_sicrometrica_modificada'],
+                                                                         x['presion_vapor_real']),axis=1)
+
+    # calculo numero calnedario juliano
+    df['numero_calendario_juliano'] = df.apply(lambda x: numero_calendario_juliano(x['anio'],x['mes'],x['dia']),axis=1)
+
+    # calculo distancia relativa inversa
+    df['distancia_relativa_tierra_sol'] = df.apply(lambda x: distancia_relativa_tierra_sol(x['numero_calendario_juliano']),axis=1)
+
+    # calculo declinación solar
+    df['declinacion_solar'] = df.apply(lambda x: declinacion_solar(x['numero_calendario_juliano']),axis=1)
+
+    # calculo angulo declinación solar
+    df['angulo_declinacion_solar'] = df.apply(lambda x: angulo_declinacion_solar(x['declinacion_solar'],x['latitud_en_radianes']),axis=1)
+
+    # calculo radiacion extraterrestre
+    df['radiacion_extraterrestre'] = df.apply(lambda x: radiacion_extraterrestre(x['latitud_en_radianes'],
+                                                                                 x['distancia_relativa_tierra_sol'],
+                                                                                 x['declinacion_solar'],
+                                                                                 x['angulo_declinacion_solar']),axis=1)
+
+    # calculo radiación solar
+    df['radiacion_solar'] = df.apply(lambda x: radiacion_solar(x['radg']),axis=1)
+
+    # calculo radiacion solar neta
+    df['radiacion_solar_neta'] = df.apply(lambda x: radiacion_solar_neta(x['radiacion_solar']),axis=1)
+
+    # calculo radiacion solar cielo despejado
+    df['radiacion_solar_cielo_despejado'] = df.apply(lambda x: radiacion_solar_cielo_despejado(x['altitud'],x['radiacion_extraterrestre']),axis=1)
+
+    # calculo radiacion solar onda larga
+    df['radiacion_solar_onda_larga'] = df.apply(lambda x: radiacion_solar_onda_larga(x['tmax'],
+                                                                                     x['tmin'],
+                                                                                     x['presion_vapor_real'],
+                                                                                     x['radiacion_solar'],
+                                                                                     x['radiacion_solar_cielo_despejado']),axis=1)
+
+
+    # calculo radiacion neta
+    df['radiacion_neta'] = df.apply(lambda x: radiacion_neta(x['radiacion_solar_neta'],x['radiacion_solar_onda_larga']),axis=1)
+
+    # calculo termino radiación
+    df['termino_radiacion'] = df.apply(lambda x: termino_radiacion(x['pendiente_curva_presion_vapor'],
+                                                                   x['constante_sicrometrica_modificada'],
+                                                                   x['radiacion_neta']),axis=1)
+
+    # calculo eapotranspiración
+    df['evapotranspiracion'] = df.apply(lambda x: evapotranspiracion(x['termino_aerodinamico'],x['termino_radiacion']),axis=1)
+
+    # print
+    print(df.head())
 
 def latitud_en_radianes(latitud):
     """
@@ -106,13 +180,13 @@ def pendiente_curva_presion_vapor(tmed, presion_tmed):
     """
     return 4098*presion_tmed/(tmed+237.3)**2
 
-def constante_sicrometrica_modificada(c_sicometrica, vv_promedio):
+def constante_sicrometrica_modificada(c_sicrometrica, vv_promedio):
     """
     calcula la constante sicrométrica modificada en kPa/ºC
-    param: c_sicometrica :  constante sicrométrica
+    param: c_sicrometrica :  constante sicrométrica
     param: vv_promedio   :  velocicad del viento promedio
     """
-    return c_sicometrica*(1+0.34*vv_promedio)
+    return c_sicrometrica*(1+0.34*vv_promedio)
 
 def presion_vapor_real(hr_max, hr_min, presion_tmax, presion_tmin):
     """
@@ -124,18 +198,18 @@ def presion_vapor_real(hr_max, hr_min, presion_tmax, presion_tmin):
     """
     return (0.5*presion_tmin*hr_max/100)+(0.5*presion_tmax*hr_min/100)
 
-def termino_aerodinamico(tmed, vv_promedio, c_sicometrica, p_media_vapor, pendiente_curva, c_sicometrica_modificada, p_vapor_real):
+def termino_aerodinamico(tmed, vv_promedio, c_sicrometrica, p_media_vapor, pendiente_curva, c_sicrometrica_modificada, p_vapor_real):
     """
     calcula el término aerodinámico de la ecuación de PM en mm/día
     param: tmed                     : temperatura media
     param: vv_promedio              :  velocidad del viento promedio
-    param: c_sicometrica            :  constante sicométrica
+    param: c_sicrometrica            :  constante sicométrica
     param: p_media_vapor            :  presión media del vapor en saturación
     param: pendiente_curva          : pendiente de la curva de la presión de vapor en saturación
-    param: c_sicometrica_modificada : constante sicométrica modificada
+    param: c_sicrometrica_modificada : constante sicométrica modificada
     param: p_vapor_real             : presion de vapor real
     """
-    return (c_sicometrica*900*vv_promedio*(p_media_vapor-p_vapor_real))/((pendiente_curva+c_sicometrica_modificada)*(tmed+273.16))
+    return (c_sicrometrica*900*vv_promedio*(p_media_vapor-p_vapor_real))/((pendiente_curva+c_sicrometrica_modificada)*(tmed+273.16))
 
 def numero_calendario_juliano(anio, mes, dia):
     """
@@ -219,14 +293,14 @@ def radiacion_neta(r_onda_corta,r_onda_larga):
     """
     return r_onda_corta - r_onda_larga
 
-def termino_radiacion(pendiente_curva, c_sicometrica_modificada, r_neta):
+def termino_radiacion(pendiente_curva, c_sicrometrica_modificada, r_neta):
     """
     calcular término de radiación de la ecuación de PM en mm/día
     param: pendiente_curva          : pendiente de la curva de la presión de vapor en saturación
-    param: c_sicometrica_modificada : constante sicrométrica modificada
+    param: c_sicrometrica_modificada : constante sicrométrica modificada
     param: r_neta                   : radiación neta
     """
-    return 0.408*pendiente_curva*r_neta/(pendiente_curva+c_sicometrica_modificada)
+    return 0.408*pendiente_curva*r_neta/(pendiente_curva+c_sicrometrica_modificada)
 
 def evapotranspiracion(aerodinamico, radiacion_ecuacion):
     """
