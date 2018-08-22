@@ -8,6 +8,9 @@
 # Date: Created on Thu Sep 28 08:38:15 2017
 # Version: 1.0
 #######################################
+
+Estructura del archivo para realizar el calculo
+numero,altitud,latitud,tmax,tmed,tmin,hrmax,hrmin,hrmean,vvmean,radg,anio,mes,dia
 """
 
 # librerías
@@ -19,9 +22,6 @@ from math import exp
 import math
 
 def main():
-    """
-    numero,altitud,latitud,tmax,tmed,tmin,hrmax,hrmin,hrmean,vvmean,radg,anio,mes,dia
-    """
     # leer csv
     df = pd.read_csv("data/example_data.csv")
 
@@ -46,7 +46,7 @@ def main():
     # calculo presión vapor tmed
     df['presion_vapor_tmed'] = df.apply(lambda x: presion_vapor_tmed(x['tmed']),axis=1)
 
-    # calculo presión vapor tmed
+    # calculo presión media del vapor en saturación
     df['presion_media_vapor'] = df.apply(lambda x: presion_media_vapor(x['presion_vapor_tmax'],x['presion_vapor_tmin']),axis=1)
 
     # calculo pendiente curva presion vapor
