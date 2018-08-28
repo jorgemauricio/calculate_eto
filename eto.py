@@ -1,16 +1,38 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-#######################################
-# Script para calcular la variable ETO
+########################################################################################
+#                  Script para calcular la variable ETO
+# 
 # Author: Jorge Mauricio
 # Email: jorge.ernesto.mauricio@gmail.com
 # Date: Created on Thu Sep 28 08:38:15 2017
 # Version: 1.0
-#######################################
+#######################################################################################
 
 Estructura del archivo para realizar el calculo
+
 numero,altitud,latitud,tmax,tmed,tmin,hrmax,hrmin,hrmean,vvmean,radg,anio,mes,dia
+
+Donde:
+
+    numero  : identificador de la estación
+    altitud : altitud de la estación
+    latitud : latitud de la estación
+    tmax    : temperatura máxima
+    tmed    : temperatura media
+    tmin    : temperatura mínima
+    hrmax   : humedad relativa máxima
+    hrmin   : humedad relativa mínima
+    hrmean  : humedad relativa promedio
+    vvmean  : velocida del viento promedio
+    radg    : radiación global
+    anio    : año de la toma del dato
+    mes     : mes de la toma del dato
+    dia     : día de la toma del dato
+
+El archivo que se procesa en el script lleva por nombre 'example_data.csv'
+y esta ubicado en la capeta 'data'
 """
 
 # librerías
